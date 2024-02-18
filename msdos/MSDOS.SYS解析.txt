@@ -1,0 +1,383 @@
+＜MSDOS.SYS＞　SYSINIT.SYSから最初の呼出しされるところ
+00003e7b fa		cli
+00003e7c fc		cld
+00003e7d 2e8916e300	mov         cs:[0xe3], dx
+00003e82 2e8926aa02	mov         cs:[0x2aa], sp
+00003e87 2e8c16ac02	mov         cs:[0x2ac], ss
+00003e8c bc3041		mov         sp, 0x4130
+00003e8f 8cc8		mov         ax, cs
+00003e91 8ed0		mov         ss, ax
+00003e93 368c1e1301	mov         ss:[0x113], ds
+00003e98 3689361101	mov         ss:[0x111], si
+00003e9d e8e801		call        0x4088
+00003ea0 56		push        si
+00003ea1 83c60a		add         si, 0xa
+00003ea4 0e		push        cs
+00003ea5 07		pop         es
+00003ea6 bf0d00		mov         di, 0xd
+00003ea9 b003		mov         al, 0x3
+00003eab aa		stosb
+00003eac fec8		dec         al
+00003eae aa		stosb
+00003eaf 32c0		xor         al, al
+00003eb1 aa		stosb
+00003eb2 aa		stosb
+00003eb3 b90400		mov         cx, 0x4
+00003eb6 f3a5		repz movsw
+00003eb8 b103		mov         cl, 0x3
+00003eba b020		mov         al, 0x20
+00003ebc f3aa		repz stosb
+00003ebe 83c70c		add         di, 0xc
+00003ec1 b0c3		mov         al, 0xc3
+00003ec3 aa		stosb
+00003ec4 5e		pop         si
+00003ec5 8bc6		mov         ax, si
+00003ec7 ab		stosw
+00003ec8 8cd8		mov         ax, ds
+00003eca ab		stosw
+00003ecb 804c0403	or          byte ptr [si+0x4], 0x3
+00003ecf 3689360601	mov         ss:[0x106], si
+00003ed4 368c1e0801	mov         ss:[0x108], ds
+00003ed9 c534		lds         si, [si]
+00003edb e8aa01		call        0x4088
+00003ede f6440408	test        byte ptr [si+0x4], 0x8
+00003ee2 74f5		jz          0x3ed9
+00003ee4 3689360201	mov         ss:[0x102], si
+00003ee9 368c1e0401	mov         ss:[0x104], ds
+00003eee bd3241		mov         bp, 4132
+
+＜0x3ef1＞
+00003ef1 c534		lds         si, [si]
+00003ef3 83feff		cmp         si, ffff
+00003ef6 7468		jz          0x3f60
+
+00003ef8 e88d01		call        0x4088			;デバイスドライバの呼び出し
+00003efb f744040080	test        word ptr [si+0x4], 8000	;キャラクタデバイスか？
+00003f00 75ef		jnz         0x3ef1			;キャラクタなら、0x3ef1へ
+00003f02 368a0e4401	mov         cl, ss:[0x144]		;cx：ユニット数の取り出し
+00003f07 32ed		xor         ch, ch			;
+00003f09 884c0a		mov         [si+0xa], cl		;DSKデバイスヘッダ40:BB+1A（ユニット数）へストア
+00003f0c 368a160a01	mov         dl, ss:[0x10a]		;DXに100:10aをセーブ？
+00003f11 32f6		xor         dh, dh
+00003f13 36000e0a01	add         ss:[0x10a], cl		;100:10aにユニット数を加える
+
+ユニット数の分、BPBの取り込み処理を行う
+
+00003f18 1e		push        ds
+00003f19 56		push        si
+00003f1a 36c51e4901	lds         bx, ss:[0x149]		;BPBのポイントゲット（最初は0040:0003）
+
+<loop>
+00003f1f 8b37		mov         si, [bx]			;siにBPBのアドレス（オフセット）を取り出す
+00003f21 43		inc         bx				;
+00003f22 43		inc         bx				;BXは次のポイントへ移動
+00003f23 26885600	mov         es:[bp], dl			;
+00003f27 26887601	mov         es:[bp+0x1], dh		;es:[bp] <- bx 次のポイントをストアする
+
+00003f2b 53		push        bx
+00003f2c 51		push        cx
+00003f2d 52		push        dx
+00003f2e e8e7ce		call        0xe18
+00003f31 268b4602	mov         ax, es:[bp+0x2]
+00003f35 363b060b01	cmp         ax, ss:[0x10b]
+00003f3a 7604		jna         0x3f40
+00003f3c 36a30b01	mov         ss:[0x10b], ax
+00003f40 5a		pop         dx
+00003f41 59		pop         cx
+00003f42 5b		pop         bx
+
+00003f43 8cd8		mov         ax, ds
+00003f45 5e		pop         si
+00003f46 1f		pop         ds
+
+00003f47 26897612	mov         es:[bp+0x12], si
+00003f4b 268c5e14	mov         es:[bp+0x14], ds
+
+00003f4f 1e		push        ds
+00003f50 56		push        si
+00003f51 fec6		inc         dh
+00003f53 fec2		inc         dl
+00003f55 8ed8		mov         ds, ax
+00003f57 83c55e		add         bp, 0x5e
+00003f5a e2c3		loop        0x3f1f			;ユニット数分繰り返す。 
+
+00003f5c 5e		pop         si
+00003f5d 1f		pop         ds
+00003f5e eb91		jmp         0x3ef1
+
+＜0x3f60＞
+00003f60 0e		push        cs
+00003f61 1f		pop         ds
+00003f62 8bfd		mov         di, bp
+00003f64 8b2e0b01	mov         bp, [0x10b]
+00003f68 b87b3e		mov         ax, 0x3e7b
+00003f6b a3ae02		mov         [0x2ae], ax
+00003f6e 03c5		add         ax, bp
+00003f70 051000		add         ax, 0x10		;ax:408b
+00003f73 a3fa00		mov         [0xfa], ax
+00003f76 8bd0		mov         dx, ax
+00003f78 81ea7b3e	sub         dx, 0x3e7b
+00003f7c 8bea		mov         bp, dx
+00003f7e 03ef		add         bp, di
+00003f80 81edb702	sub         bp, 0x2b7
+
+00003f84 55		push        bp			;406e番地でpop cxされる
+
+00003f85 bf3241		mov         di, 4132
+00003f88 83c718		add         di, 0x18		;di:414ah
+00003f8b 8a0e0a01	mov         cl, [0x10a]		; ユニット数を取り出す
+00003f8f 32ed		xor         ch, ch		;
+
+00003f91 055e00		add         ax, 0x5e		;ax:40e9、4147、41a5、4203
+00003f94 ab		stosw				;es:di(100:414a)に40e9hをストア　di:414c
+00003f95 83c75c		add         di, 0x5c		;di:41a8、4206、4264、42c2
+00003f98 e2f7		loop        0x3f91		;ユニット数分、繰り返す
+
+00003f9a 83ef5e		sub         di, 0x5e
+00003f9d b8ffff		mov         ax, ffff
+00003fa0 ab		stosw				;di:4264にFFFFをストア（endの印？）
+00003fa1 83c50f		add         bp, 0xf		;bp=4212
+00003fa4 b104		mov         cl, 0x4
+00003fa6 d3ed		shr         bp, cl		;4212のパラグラフを求める
+00003fa8 8cca		mov         dx, cs
+00003faa 03d5		add         dx, bp		;次のワーク？の先頭パラグラフ？dx=521
+00003fac bb0f00		mov         bx, 0xf
+00003faf 8b0ee300	mov         cx, [0xe3]		;MAXメモリ？を取り出すcx=ff00
+00003fb3 8ccd		mov         bp, cs		; bp=100h
+00003fb5 890ee300	mov         [0xe3], cx
+00003fb9 8ec5		mov         es, bp
+00003fbb 268c067701	mov         es:[0x177], es
+00003fc0 33c0		xor         ax, ax
+00003fc2 8ed8		mov         ds, ax
+00003fc4 8ec0		mov         es, ax
+00003fc6 bf8200		mov         di, 0x82
+00003fc9 8bc5		mov         ax, bp
+00003fcb c606c000ea	mov         byte ptr [0xc0], 0xea	;INT 30h ジャンプ命令セット？？(100:59e)
+00003fd0 c706c1009e05	mov         word ptr [0xc1], 0x59e
+00003fd6 a3c300		mov         [0xc3], ax
+00003fd9 c7060000702a	mov         word ptr [0x0], 0x2a70	;INT 0 除算エラーベクタ設定(100:2a70)
+00003fdf a30200		mov         [0x2], ax
+00003fe2 b91100		mov         cx, 0x11			;82hから17ワード分、100hで埋める。
+00003fe5 f3ab		repz stosw				;
+00003fe7 c70680008905	mov         word ptr [0x80], 0x589	;INT 20h - INT 28hまでの初期化
+00003fed c70684008d05	mov         word ptr [0x84], 0x58d
+00003ff3 c70688000001	mov         word ptr [0x88], 0x100
+00003ff9 89168a00	mov         [0x8a], dx
+00003ffd c7068c009d05	mov         word ptr [0x8c], 0x59d
+00004003 c70690009d05	mov         word ptr [0x90], 0x59d
+00004009 c70694007b0e	mov         word ptr [0x94], 0xe7b
+0000400f c7069800b40e	mov         word ptr [0x98], 0xeb4
+00004015 c7069c00b932	mov         word ptr [0x9c], 0x32b9
+0000401b c706a0009d05	mov         word ptr [0xa0], 0x59d
+00004021 b90c00		mov         cx, 0xc			
+00004024 33c0		xor         ax, ax
+00004026 bfa800		mov         di, 0xa8			; INT 2A - INT 2Cまで0クリア
+00004029 f3ab		repz stosw
+
+0000402b 0e		push        cs
+0000402c 1f		pop         ds
+
+0000402d 0e		push        cs
+0000402e 07		pop         es
+
+0000402f b89a01		mov         ax, 0x19a
+00004032 050f00		add         ax, 0xf			; ax=1a9
+00004035 b104		mov         cl, 0x4
+00004037 d3e8		shr         ax, cl			; ax=1a
+00004039 8cdf		mov         di, ds
+0000403b 03f8		add         di, ax			; di=11a
+0000403d 47		inc         di				; di=11b
+0000403e 893e9501	mov         [0x195], di
+
+00004042 55		push        bp				; bp=100h
+00004043 52		push        dx
+
+00004044 a1e300		mov         ax, [0xe3]			; maxメモリ取り出し ax=ff00
+00004047 8bd7		mov         dx, di			; dx=11b
+00004049 e8e9ca		call        0xb35
+0000404c 0e		push        cs
+0000404d 1f		pop         ds
+0000404e bf1800		mov         di, 0x18
+00004051 33c0		xor         ax, ax
+00004053 ab		stosw
+00004054 aa		stosb
+00004055 b0ff		mov         al, 0xff
+00004057 b91100		mov         cx, 0x11
+0000405a f3aa		repz stosb
+0000405c 0e		push        cs
+0000405d 07		pop         es
+0000405e 8c1e0001	mov         [0x100], ds
+00004062 be4505		mov         si, 0x545
+00004065 e808ca		call        0xa70			;オープニングメッセージ出力
+00004068 0e		push        cs
+00004069 1f		pop         ds				; ds=100h
+0000406a 0e		push        cs
+0000406b 07		pop         es				; es=100h
+
+0000406c 5a		pop         dx
+0000406d 5d		pop         bp
+
+0000406e 59		pop         cx				;3f84番地でpush bpがcxにpopされる
+0000406f be3241		mov         si, 4132
+00004072 8b3efa00	mov         di, [0xfa]
+00004076 2bcf		sub         cx, di
+00004078 3bfe		cmp         di, si
+0000407a 7607		jna         0x4083
+0000407c 49		dec         cx
+0000407d 03f9		add         di, cx
+0000407f 03f1		add         si, cx
+00004081 41		inc         cx
+00004082 fd		std
+
+00004083 8ec5		mov         es, bp
+00004085 e928c2		jmp         0x2b0			;この先でretfする
+
+
+
+
+
+
+
+＜0xe18＞
+00000e18 8bfd		mov         di, bp	;ds:40 es:100 di:4132 ユニット数のオフセット？
+00000e1a 83c702		add         di, 0x2	;di:4134 ユニット数の次のポイント
+00000e1d ad		lodsw			;ds:si(40:16)の内容（セクタサイズ）をAXに持ってくる。
+						;siは18となる
+00000e1e ab		stosw			;es:di(100:4134)へセクタ数をストア　diは4136となる
+00000e1f 8bd0		mov         dx, ax	;セクタ数をdxへ退避
+00000e21 ac		lodsb			;１アロケーション/セクタ数をalに取り出す（１）si=19
+00000e22 fec8		dec         al		;１を引いておく
+00000e24 aa		stosb			;es:di(100:4136)へストア di=4137
+00000e25 fec0		inc         al		;１を加える（元の１アロケーション/セクタ数）(1)
+00000e27 32e4		xor         ah, ah
+00000e29 a801		test        al, 0x1
+00000e2b 7506		jnz         0xe33
+00000e2d fec4		inc         ah		;ah=alの１のビット位置（0->0,2->1,4->2・・・)
+00000e2f d0e8		shr         al, 0x1	;アロケーション当たりのセクタ数は２＾Ｘ乗の必要あり
+00000e31 ebf6		jmp         0xe29
+00000e33 8ac4		mov         al, ah
+00000e35 aa		stosb			;es:di(100:4137)へahの値をストア di=4138
+00000e36 8ad8		mov         bl, al	;blへ退避
+00000e38 a5		movsw			;es:di(100:4138)へds:si(40:19)予約セクタ数を転送
+						;es:di(100:413a) ds:si(40:1b)
+00000e39 ac		lodsb			;FATの数を取り出すds:si(40:1c9)
+00000e3a aa		stosb			;es:di(100:413a)へストアする es:di(100:413b)
+00000e3b 8af8		mov         bh, al	;bhへFAT数を退避
+00000e3d ad		lodsw			;ルートディレクトリのエントリ数を取り出す(e0(224)) ds:si(40:1e)
+00000e3e ab		stosw			;es:di(100:413b)へストアes:di(100:413d)
+00000e3f b105		mov         cl, 0x5
+00000e41 d3ea		shr         dx, cl	;セクタ数 >> 5 つまりセクタ数/32する　512/32=16（10h)
+						;（1セクタ当たりのディレクトリ数を計算？している）
+						; 1セクタ当たり16(10h)個のディレクトリ数となる
+00000e43 48		dec         ax		;
+00000e44 03c2		add         ax, dx	;ax=(ルートディレクトリのエントリ数-1)+10h = efh  ???
+00000e46 8bca		mov         cx, dx	;cx=entrys/32
+00000e48 33d2		xor         dx, dx	;
+00000e4a f7f1		div         ax, cx	; efh/10h(1セクタ当たりのディレクトリ数) ax=0eh, dl=0fh（余り）
+00000e4c 8bc8		mov         cx, ax	; cx:ルートディレクトリのエントリ数に必要なセクタ数を求める
+00000e4e 47		inc         di
+00000e4f 47		inc         di		;es:di(100:413F)
+00000e50 a5		movsw			;ds:si(40:1e)論理セクタ数をes:di(100:413F)へストア
+						;ds:si(40:20) es:di(100:4141)
+00000e51 ac		lodsb			;メディアディスクリプタを取り出す al=f0h ds:si(40:21)
+00000e52 26884616	mov    es:[bp+0x16], al	;メディアディスクリプタを100:4148にストア
+00000e56 ad		lodsw			;FAT当たりのセクタ数を取り出す ax=9 ds:si(40:23)
+00000e57 aa		stosb			;es:di(100:4141)へストアする　es:di(100:4142)
+00000e58 f6e7		mul         al, bh	;al=FAT数×FAT当たりのセクタ数（2*9=12h)
+00000e5a 26034606	add    ax, es:[bp+0x6]　;予約セクタを加える：bp+6（予約セクタの位置）
+00000e5e ab		stosw			;es:di(100:4142)へストアするes:di(100:4144)
+00000e5f 03c1		add         ax, cx	;ルートディレクトリのエントリ数に必要なセクタ数(0eh)を加える(21h)
+00000e61 2689460b	mov    es:[bp+0xb], ax	;計算結果axを413dへストアする
+00000e65 262b460d	sub    ax, es:[bp+0xd]	;総論理セクタを引く（負の数になる）
+00000e69 f7d8		neg         ax		;１の補数を取る（つまり、総論理セクタから引いている）
+00000e6b 8acb		mov         cl, bl	; 
+00000e6d d3e8		shr         ax, cl	;アロケーションビットで右シフト（B1Fhは変化なし）
+00000e6f 40		inc         ax		;1加える（b20h）
+00000e70 2689460d	mov    es:[bp+0xd], ax	;ディレクトリ+リザーブを除く総セクタ数がセーブ
+00000e74 26c7461c0000	mov    word ptr es:[bp+0x1c], 0x0　
+00000e7a c3		ret
+
+
+
+
+＜b35＞	: 入力 dx:転送先のセグメント　はじめはdx=11bから
+00000b35 33c9		xor         cx, cx
+00000b37 8ed9		mov         ds, cx		; ds=0
+00000b39 8ec2		mov         es, dx		; es=dx(11b)
+00000b3b be8800		mov         si, 0x88		; ds:si(0:88)
+00000b3e bf0a00		mov         di, 0xa		; es:di(11b:a) (空きエリア）
+00000b41 b90600		mov         cx, 0x6
+00000b44 f3a5		repz movsw
+00000b46 26a30200	mov         es:[0x2], ax
+00000b4a 2bc2		sub         ax, dx
+00000b4c 3dff0f		cmp         ax, 0xfff
+00000b4f 7603		jna         0xb54
+00000b51 b8ff0f		mov         ax, 0xfff
+00000b54 bb0c00		mov         bx, 0xc
+00000b57 2bd8		sub         bx, ax
+00000b59 b104		mov         cl, 0x4
+00000b5b d3e0		shl         ax, cl
+00000b5d 8eda		mov         ds, dx
+00000b5f a30600		mov         [0x6], ax
+00000b62 891e0800	mov         [0x8], bx
+00000b66 c7060000cd20	mov         word ptr [0x0], 0x20cd
+00000b6c c60605009a	mov         byte ptr [0x5], 0x9a
+00000b71 c7065000cd21	mov         word ptr [0x50], 0x21cd
+00000b77 c6065200cb	mov         byte ptr [0x52], 0xcb
+00000b7c c3		ret
+
+＜2b0＞
+000002b0 2e8b26aa02	mov         sp, cs:[0x2aa]
+000002b5 2e8e16ac02	mov         ss, cs:[0x2ac]
+000002ba f3a4		repz movsb
+000002bc fc		cld
+000002bd 268916e100	mov         es:[0xe1], dx
+000002c2 8b36fa00	mov         si, [0xfa]
+000002c6 268c06fc00	mov         es:[0xfc], es
+000002cb 268c060001	mov         es:[0x100], es
+000002d0 8a0e0a01	mov         cl, [0x10a]
+000002d4 32ed		xor         ch, ch
+
+000002d6 268c441a	mov         es:[si+0x1a], es
+000002da 26c64417ff	mov         byte ptr es:[si+0x17], 0xff
+000002df 83c65e		add         si, 0x5e
+000002e2 e2f2		loop        0x2d6
+
+000002e4 83ee5e		sub         si, 0x5e
+000002e7 26c7441affff	mov         word ptr es:[si+0x1a], ffff
+000002ed 8b3eae02	mov         di, [0x2ae]
+000002f1 268c060f01	mov         es:[0x10f], es
+000002f6 26893e0d01	mov         es:[0x10d], di
+000002fb 26c74504ff00	mov         word ptr es:[di+0x4], 0xff
+00000301 26c6450600	mov         byte ptr es:[di+0x6], 0x0
+00000306 26c705ffff	mov         word ptr es:[di], ffff
+0000030b 26c74502ffff	mov         word ptr es:[di+0x2], ffff
+
+00000311 06		push        es
+00000312 42		inc         dx
+00000313 c6069701ff	mov         byte ptr [0x197], 0xff
+00000318 e8b307		call        0xace
+0000031b 07		pop         es
+
+0000031c 50		push        ax
+0000031d 2ea19501	mov         ax, cs:[0x195]
+00000321 26a39501	mov         es:[0x195], ax
+00000325 26c606970100	mov         byte ptr es:[0x197], 0x0
+0000032b 48		dec         ax
+0000032c 26a3f800	mov         es:[0xf8], ax
+00000330 1e		push        ds
+00000331 8ed8		mov         ds, ax
+00000333 c60600005a	mov         byte ptr [0x0], 0x5a
+00000338 c70601000000	mov         word ptr [0x1], 0x0
+0000033e 262b06e300	sub         ax, es:[0xe3]
+00000343 f7d8		neg         ax
+00000345 48		dec         ax
+00000346 a30300		mov         [0x3], ax
+00000349 1f		pop         ds
+0000034a 58		pop         ax
+
+0000034b bf0d00		mov         di, 0xd
+0000034e b003		mov         al, 0x3
+00000350 aa		stosb
+00000351 bffa00		mov         di, 0xfa
+00000354 cb		retf
