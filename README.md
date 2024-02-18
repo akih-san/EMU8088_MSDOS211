@@ -13,6 +13,7 @@ SBCについての詳細と、Gerberデータは、以下を参照してくだ�
 ＜EMU8088_57Q_CPM86＞<br>
 https://github.com/akih-san/EMU8088_57Q_CPM86
 <br>
+
 EMU8088_57Q SBCボード
 ![EMU8088 1](photo/P1020470.JPG)
 
