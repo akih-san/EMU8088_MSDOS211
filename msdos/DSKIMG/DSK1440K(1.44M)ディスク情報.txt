@@ -2,7 +2,7 @@
 03 : 4D 53 44 4F 53 35 2E 30
 0B : 00 02	:  512 bytes / sector
 0D : 01		:    1 sectors / Allocation Unit
-                     (1�N���X�^�[(�A���P�[�V�������j�b�g)������̃Z�N�^�[���B2^n�͈̔�)
+                     (1クラスター(アロケーションユニット)あたりのセクター数。2^nの範囲)
 0E : 01 00	:    1 reserved sectors
 10 : 02		:    2 number of FATs
 11 : E0 00	:  224 entries of root direcrory
@@ -15,10 +15,10 @@
 
 <,,512,1,1,2,224,2880,240,9,36>
 
-�A���P�[�V�������j�b�g�T�C�Y�́A�u�N���X�^�T�C�Y�v�Ƃ��Ă΂�A
-�X�g���[�W �f�o�C�X��̃f�[�^��ۑ�����ŏ��P�ʂł��B 
-��̓I�ɂ́A�X�g���[�W �f�o�C�X��1�P�ʂ̃f�[�^��ۑ�����ƁA
-��L����T�C�Y�͐ݒ肵���A���P�[�V�������j�b�g�T�C�Y�ɂȂ�܂�
+アロケーションユニットサイズは、「クラスタサイズ」とも呼ばれ、
+ストレージ デバイス上のデータを保存する最小単位です。 
+具体的には、ストレージ デバイスに1単位のデータを保存すると、
+占有するサイズは設定したアロケーションユニットサイズになります
 
 typedef struct {
 
@@ -47,49 +47,16 @@ typedef struct {
 
 DPB	dsk1440 = {{{0,0,0},{0,0,0,0,0,0,0,0}},512,1,1,2,224,2880,d144_media,9,d144_tsec};
 
-���[�g�f�B���N�g���J�n�ʒu
+ルートディレクトリ開始位置
 
-���U�[�u�Z�N�^�@�P
-FAT���@�Q
-�PFAT������̃Z�N�^���X
+リザーブセクタ　１
+FAT数　２
+１FATあたりのセクタ数９
 
-�]���āA�P�{�X�{�X���P�X�i�O���P�R�j
+従って、１＋９＋９＝１９（０ｘ１３）
 
-�_���Z�N�^�O���P�R���烋�[�g�f�B���N�g�����i�[����Ă���
+論理セクタ０ｘ１３からルートディレクトリが格納されている
 
-0x13�~512�@���@0x2600
-�o�C�i���_���v�ŃI�t�Z�b�g0x2600���烋�[�g�f�B���N�g��
-
-
---------------�ȉ�skelio�̏��
-
-DBP     STRUC
-
-JMPNEAR DB      3 DUP (?)       ;Jmp Near xxxx  for boot.
-NAMEVER DB      8 DUP (?)       ;Name / Version of OS.
-
-;-------  Start of Drive Parameter Block.
-
-SECSIZE DW      ?               ;Sector size in bytes.                  (dpb)
-ALLOC   DB      ?               ;Number of sectors per alloc. block.    (dpb)
-RESSEC  DW      ?               ;Reserved sectors.                      (dpb)
-FATS    DB      ?               ;Number of FAT's.                       (dpb)
-MAXDIR  DW      ?               ;Number of root directory entries.      (dpb)
-SECTORS DW      ?               ;Number of sectors per diskette.        (dpb)
-MEDIAID DB      ?               ;Media byte ID.                         (dpb)
-FATSEC  DW      ?               ;Number of FAT Sectors.                 (dpb)
-
-;-------  End of Drive Parameter Block.
-
-SECTRK  DW      ?               ;Number of Sectors per track.
-
-DBP     ENDS
-
-LSDRIV1 DBP     <,,128,4,1,2,68,2002,0FEH,6,26>
-
-LSDRIV2 DBP     <,,128,4,4,2,68,2002,0FDH,6,26>
-
-LDDRIV1 DBP     <,,512,1,24,2,128,924,0F8H,3,12>
-
-LDDRIV2	DBP	<,,1024,1,16,2,128,616,0F9H,1,8>
+0x13×512　＝　0x2600
+バイナリダンプでオフセット0x2600からルートディレクトリ
 
