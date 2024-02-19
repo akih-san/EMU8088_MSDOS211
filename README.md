@@ -24,7 +24,7 @@ MS-DOS Ver2.11 Opening Photo
 ![EMU8088 2](photo/MSDOS_opening.png)
 
 # ファームウェア
-@hanyazouさんが作成したZ80で動作しているCP/M-80のFWをベースに、EMU8088_57Q0用の<br>
+@hanyazouさんが作成したZ80で動作しているCP/M-80のFWをベースに、EMU8088_57Q用の<br>
 FWとして動作するように修正を加え、MS-DOSをインプリメントしました。<br>
 <br>
 MS-DOSのデバイスドライバの本体はPICのFW側で実現し、新設計となります。<br>
