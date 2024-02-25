@@ -185,7 +185,7 @@ void __interrupt(irq(TMR0),base(8)) TIMER0_ISR(){
 			}
 		}
 	}
-	tim_pb.TIM_HSEC = TMR0L % 100;
+	tim_pb.TIM_HSEC = 0;
 }
 
 ////////////// UART3 Receive interrupt ////////////////////////////
@@ -535,10 +535,6 @@ int set_drive( iodat *req_h ) {
 	u = req_h->unit;
 	if ( u >= DRVMAX ) return( -1 );
 	disk_drive = u;
-
-//debug
-//printf("set_drive(): disk_drive(%04x)\r\n", disk_drive);
-
 	return(0);
 }
 
@@ -562,15 +558,8 @@ int setup_drive(iodat *req_h) {
 		dsk_drv_err( req_h );
 		return( -1 );
 	}
-//	if ( set_tr_sec( req_h ) ) {
-//		dsk_sec_err( req_h );
-//		return( -1 );
-//	}
 	disk_dmal = req_h->trans_off;
 	disk_dmah = req_h->trans_seg;
-
-//debug
-//printf("setup_drive(): disk_dmal(%04x), disk_dmah(%04x)\r\n", disk_dmal, disk_dmah);
 
 	return( 0 );
 }
@@ -580,10 +569,7 @@ int seek_disk(iodat *req_h) {
 	FRESULT fres;
 	FIL *filep = drives[disk_drive].filep;
 
-//debug
-//printf("seek_disk(): disk_drive(%04x), disk_sector(%04x)\r\n", disk_drive, disk_sector);
-
-	if (num_drives <= disk_drive || drives[disk_drive].filep == NULL) return(-1);
+	if (drives[disk_drive].filep == NULL) return(-1);
 	if ((fres = f_lseek(filep, (uint32_t)disk_sector * SECTOR_SIZE)) != FR_OK) {
 		printf("f_lseek(): ERROR %d\n\r", fres);
 		return(-1);

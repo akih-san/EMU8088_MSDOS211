@@ -80,11 +80,7 @@
 #define SPI_SD_CLK      C1
 #define SPI_SD_SS       SPI_SS
 
-//#define CMD_REQ CLC1OUT
-//debug
 #define CMD_REQ CLC3OUT
-//debug
-#define BUS_HOLD_ACK R(I88_HOLDA)
 
 #include "emu88_common.c"
 
@@ -168,10 +164,6 @@ static void emu88_57q_sys_init()
 	// reset CLC3
 	reset_ioreq();
 
-//debug
-//	RB5PPS = 0x03;
-//debug
-
 	// SPI data and clock pins slew at maximum rate
 
 	SLRCON(SPI_SD_PICO) = 0;
@@ -246,8 +238,9 @@ static void emu88_57q_sys_init()
 	RB7PPS = 0x1C;		// PWM3S1P1_OUT
 
 //************ timer0 setup ******************
-	T0CON0 = 0x10;	// timer disable, 16bit counter mode , 1:1 Postscaler
+	T0CON0 = 0x90;	// timer enable, 16bit counter mode , 1:1 Postscaler
 	T0CON1 = 0x80;	// sorce clk:LFINTOSC, 1:1 Prescaler
+	LFOEN = 1;		// LFINTOSC is explicitly enabled
 
 	TMR0L = TIMER0_INITCL;
 	TMR0H = TIMER0_INITCH;		//	timer counter set to 0x86e8
@@ -263,8 +256,8 @@ static void emu88_57q_sys_init()
             printf("No SD Card?\n\r");
             while(1);
         }
-//debug111
-        if (SDCard_init(SPI_CLOCK_100KHZ, SPI_CLOCK_2MHZ, /* timeout */ 100) == SDCARD_SUCCESS)
+//        if (SDCard_init(SPI_CLOCK_100KHZ, SPI_CLOCK_2MHZ, /* timeout */ 100) == SDCARD_SUCCESS)
+        if (SDCard_init(SPI_CLOCK_100KHZ, SPI_CLOCK_4MHZ, /* timeout */ 100) == SDCARD_SUCCESS)
 //        if (SDCard_init(SPI_CLOCK_100KHZ, SPI_CLOCK_8MHZ, /* timeout */ 100) == SDCARD_SUCCESS)
             break;
         __delay_ms(200);
@@ -276,6 +269,7 @@ static void emu88_57q_start_i88(void)
 
     emu88_common_start_i88();
 
+	TMR0IF =0; // Clear timer0 interrupt flag
 	TMR0IE = 1;	// Enable timer0 interrupt
 
 	// Unlock IVT
@@ -290,9 +284,6 @@ static void emu88_57q_start_i88(void)
     IVTLOCK = 0x55;
     IVTLOCK = 0xAA;
     IVTLOCKbits.IVTLOCKED = 0x01;
-
-
-//	printf("Start 8088/V20\r\n");
 
 	TRIS(I88_HOLDA) = 1;    // HOLDA is set as input
 	LAT(I88_HOLD) = 0;		// Release HOLD

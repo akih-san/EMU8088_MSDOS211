@@ -228,8 +228,8 @@ typedef struct {
 	uint16_t TIM_DAYS;		//Number of days since 1-01-1980.
 	uint8_t  TIM_MINS;		//Minutes.
 	uint8_t  TIM_HRS;		//Hours.
-	uint8_t  TIM_SECS;		//Seconds.
 	uint8_t  TIM_HSEC;		//Hundreths of a second.
+	uint8_t  TIM_SECS;		//Seconds.
 } TPB;
 
 #define TIM20240101	16071	// 16071days from 1980
