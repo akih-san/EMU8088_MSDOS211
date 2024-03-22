@@ -21,6 +21,16 @@
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+/*
+    PIC18F57Q43 ROM RAM and UART emulation firmware
+    This single source file contains all code
+    Original source code for PIC18F47Q43 ROM RAM and UART emulation firmware
+    Designed by @hanyazou https://twitter.com/hanyazou
+
+    Target: EMU8088 - The computer with only 8088/V20 and PIC18F57Q43
+    Written by Akihito Honda
+*/
+
 #define BOARD_DEPENDENT_SOURCE
 
 #include "../../src/emu88.h"
