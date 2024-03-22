@@ -80,9 +80,6 @@ void main(void)
     io_init();
     mem_init();
 
-    U3RXIE = 1;          // Receiver interrupt enable
-    GIE = 1;             // Global interrupt enable
-
 	if (menu_select() < 0) while (1);
 
 	//
