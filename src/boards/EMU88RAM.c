@@ -42,7 +42,7 @@
 #define SPI_HW_INST     SPI1
 #include "../../drivers/SPI.h"
 
-#define CLK8M
+//#define CLK8M
 
 #define I88_DATA        C
 #define I88_ADDR_H      F
