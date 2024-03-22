@@ -42,7 +42,7 @@
 #define SPI_HW_INST     SPI1
 #include "../../drivers/SPI.h"
 
-//#define CLK8M
+#define CLK8M
 
 #define I88_DATA        C
 #define I88_ADDR_H      F
@@ -77,9 +77,6 @@
 #define I88_INTA	A4
 #define I88_INTR	B4
 
-// RA6 is used as UART TXD
-// RA7 is used as UART RXD
-
 #define SPI_SS		E2
 #define SPI_SD_POCI	C2
 
@@ -97,8 +94,9 @@ static void emu88_57q_sys_init()
 {
     emu88_common_sys_init();
 
+	// NMI definition
 	WPU(I88_NMI) = 0;     // NMI Week pull down
-	PPS(I88_NMI) = 0;     // set latch port
+	PPS(I88_NMI) = 0;     // set as latch port
 	LAT(I88_NMI) = 0;     // NMI=0
 	TRIS(I88_NMI) = 0;    // Set as output
 
@@ -116,7 +114,7 @@ static void emu88_57q_sys_init()
 	
 	// IO/#M
 	WPU(I88_IOM) = 1;     // I88_IOM Week pull up
-	LAT(I88_IOM) = 0;     // init: I/O operation
+	LAT(I88_IOM) = 0;     // memory /CE active
 	TRIS(I88_IOM) = 0;    // Set as onput
 
 	// ALE
@@ -181,18 +179,6 @@ static void emu88_57q_sys_init()
  I88_CLK TIMING REQUIREMENTS(MUST)
  CLK Low Time  : minimum 118ns
  CLK High Time : minimum 69ns
-
- <NG>
- I88_CLK = 5000000UL
- 1/5MHz  = 200ns
- CLK Low Time  : 100ns
- CLK High Time : 100ns
-
- <OK>
- I88_CLK = 4000000UL
- 1/4MHz  = 250ns
- CLK Low Time  : 125ns
- CLK High Time : 125ns
 *************************************************/
 
 /**************** PWM3 ********************
@@ -269,6 +255,9 @@ static void emu88_57q_sys_init()
             break;
         __delay_ms(200);
     }
+
+	GIE = 1;             // Global interrupt enable
+
 }
 
 static void emu88_57q_start_i88(void)
@@ -309,13 +298,13 @@ void reset_ioreq(void)
 void set_hold_pin(void)
 {
 	LAT(I88_HOLD) = 1;
-	while( !R(I88_HOLDA) ) {};		// wait until bus release
+	while( !R(I88_HOLDA) ) {}		// wait until bus release
 }
 
 void reset_hold_pin(void)
 {
 	LAT(I88_HOLD) = 0;
-	while( R(I88_HOLDA) ) {};		// wait until bus release
+	while( R(I88_HOLDA) ) {}		// wait until bus release
 }
 
 void nmi_sig_off(void)

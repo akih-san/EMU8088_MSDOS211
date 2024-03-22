@@ -25,6 +25,7 @@
     Target: EMU8088 - The computer with only 8088/V20 and PIC18F57Q43
     Written by Akihito Honda
 */
+
 #define BOARD_DEPENDENT_SOURCE
 
 #include "../emu88.h"
@@ -69,6 +70,8 @@ static void emu88_common_sys_init()
     RA6PPS = 0x26;      // UART3:TXD -> RA6;
 
     U3ON = 1;           // Serial port enable
+
+    U3RXIE = 1;          // Receiver interrupt enable
 
 	// Init address LATCH to 0
 	// Address bus A7-A0 pin
@@ -159,6 +162,7 @@ void write_sram(uint32_t addr, uint8_t *buf, unsigned int len)
         	}
         }
     }
+	TRIS(I88_DATA) = 0xff;	// Set as input
 }
 
 void read_sram(uint32_t addr, uint8_t *buf, unsigned int len)
@@ -179,7 +183,7 @@ void read_sram(uint32_t addr, uint8_t *buf, unsigned int len)
 	LAT(I88_A19) = (ab.hl & 0x08) ? 1 : 0;
 
 	for(i = 0; i < len; i++) {
-        ((uint8_t*)buf)[i] = PORT(I88_DATA);
+        ((uint8_t*)buf)[i] = PORT(I88_DATA);	// read data
 
 		LAT(I88_ADDR_L) = ++ab.ll;
         if (ab.ll == 0) {
@@ -195,8 +199,8 @@ void read_sram(uint32_t addr, uint8_t *buf, unsigned int len)
     }
 
 	LAT(I88_RD) = 1;      // deactivate /OE
-}
 
+}
 
 static __bit emu88_common_rd_pin(void) { return R(I88_RD); }
 static __bit emu88_common_wr_pin(void) { return R(I88_WR); }
