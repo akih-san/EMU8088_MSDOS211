@@ -67,9 +67,6 @@
 #define I88_INTA	A4
 #define I88_INTR	B4
 
-#define SRAM_OE		I88_RD
-#define SRAM_WE		I88_WR
-
 // RA6 is used as UART TXD
 // RA7 is used as UART RXD
 
@@ -109,7 +106,7 @@ static void emu88_57q_sys_init()
 	
 	// IO/#M
 	WPU(I88_IOM) = 1;     // I88_IOM Week pull up
-	LAT(I88_IOM) = 1;     // init: I/O operation
+	LAT(I88_IOM) = 0;     // init: I/O operation
 	TRIS(I88_IOM) = 0;    // Set as onput
 
 	// ALE
@@ -117,16 +114,16 @@ static void emu88_57q_sys_init()
     TRIS(I88_ALE) = 1;    // Set as input
 
 	// /WR output pin
-	WPU(SRAM_WE) = 1;		// /WR Week pull up
-    LAT(SRAM_WE) = 1;		// disactive
-    TRIS(SRAM_WE) = 0;		// Set as output
-    PPS(SRAM_WE) = 0x00;	//reset:output PPS is LATCH
+	WPU(I88_WR) = 1;		// /WR Week pull up
+    LAT(I88_WR) = 1;		// disactive
+    TRIS(I88_WR) = 0;		// Set as output
+    PPS(I88_WR) = 0x00;	//reset:output PPS is LATCH
 
 	// /RD output pin
-	WPU(SRAM_OE) = 1;		// /WR Week pull up
-    LAT(SRAM_OE) = 1;		// disactive
-    TRIS(SRAM_OE) = 0;		// Set as output
-    PPS(SRAM_OE) = 0x00;	//reset:output PPS is LATCH
+	WPU(I88_RD) = 1;		// /WR Week pull up
+    LAT(I88_RD) = 1;		// disactive
+    TRIS(I88_RD) = 0;		// Set as output
+    PPS(I88_RD) = 0x00;	//reset:output PPS is LATCH
 
 	// SPI_SS
 	WPU(SPI_SS) = 1;     // SPI_SS Week pull up
@@ -330,14 +327,10 @@ static void bus_hold_req(void) {
 	TRIS(I88_A18) = 0;			// Set as output
 	TRIS(I88_A19) = 0;			// Set as output
 
-	LAT(I88_RD) = 1;
-	LAT(I88_WR) = 1;
-
 	TRIS(I88_RD) = 0;           // output
 	TRIS(I88_WR) = 0;           // output
 	// SRAM U4, U5 are HiZ
 
-	LAT(I88_IOM) = 1;     // IOM# =1 set IO accsess 
 	TRIS(I88_IOM) = 0;    // Set as output
 
 }
@@ -346,7 +339,6 @@ static void bus_release_req(void) {
 	// Set address bus as input
 	TRIS(I88_ADDR_L) = 0xff;    // A7-A0
 	TRIS(I88_ADDR_H) = 0xff;    // A8-A15
-	TRIS(I88_DATA) = 0xff;      // D7-D0 pin
 	TRIS(I88_A16) = 1;    // Set as input
 	TRIS(I88_A17) = 1;    // Set as input
 	TRIS(I88_A18) = 1;    // Set as input
